@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" class=""> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Recipe Chef</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Glassmorphism effect for the form container */
+        .form-container {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+        }
+        /* Custom spinner animation */
+        .loader {
+            border-top-color: #f59e0b; /* Amber 500 */
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        /* Simple fade-in animation for elements */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <div id="bg-container" class="min-h-screen bg-cover bg-center bg-fixed" style="background-image: url('https://source.unsplash.com/1920x1080/?food,cooking');">
+        <div class="min-h-screen bg-black/30 dark:bg-black/50">
+            
+            <div class="absolute top-4 right-4">
+                <button id="theme-toggle" class="p-2 rounded-full bg-gray-200/50 dark:bg-gray-700/50 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                    <i class="fas fa-moon hidden dark:inline"></i>
+                    <i class="fas fa-sun inline dark:hidden"></i>
+                </button>
+            </div>
+            
+            <div class="container mx-auto p-4 md:p-8 flex flex-col items-center justify-center min-h-screen">
+
+                <div class="form-container bg-white/75 dark:bg-gray-800/80 p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-2xl fade-in">
+                    <div class="text-center mb-6">
+                        <i class="fas fa-utensils text-4xl text-amber-500"></i>
+                        <h1 class="text-3xl md:text-4xl font-bold mt-2 text-gray-900 dark:text-white">AI Recipe Chef</h1>
+                        <p class="text-gray-600 dark:text-gray-300 mt-2">Turn your ingredients into delicious meals!</p>
+                    </div>
+
+                    <form id="recipe-form" class="space-y-6">
+                        <div class="relative">
+                            <label for="ingredients" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredients You Have</label>
+                            <div class="absolute inset-y-0 left-0 top-6 flex items-center pl-3 pointer-events-none">
+                                <i class="fa-solid fa-carrot text-gray-400"></i>
+                            </div>
+                            <input type="text" id="ingredients" name="ingredients" class="w-full p-3 pl-10 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" placeholder="e.g., chicken, rice, tomatoes" required>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="dietary-restrictions" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dietary Style</label>
+                                <select id="dietary-restrictions" name="dietary-restrictions" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition">
+                                    <option value="none">None</option>
+                                    <option value="vegetarian">Vegetarian</option>
+                                    <option value="vegan">Vegan</option>
+                                    <option value="gluten-free">Gluten-Free</option>
+                                    <option value="dairy-free">Dairy-Free</option>
+                                    <option value="keto">Keto</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="cuisine-type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cuisine Type</label>
+                                <input type="text" id="cuisine-type" name="cuisine-type" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 transition" placeholder="e.g., Italian, Mexican, any">
+                            </div>
+                        </div>
+
+                        <div>
+                            <button type="submit" id="generate-btn" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 dark:focus:ring-offset-gray-800 transform hover:scale-105 transition duration-300 ease-in-out flex items-center justify-center shadow-lg">
+                                <i class="fas fa-magic mr-2"></i>
+                                Generate Recipe
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="loader" class="hidden my-8 text-center">
+                    <div class="loader ease-linear rounded-full border-8 border-t-8 border-gray-200 h-24 w-24 mx-auto"></div>
+                    <p class="mt-4 text-white text-lg font-semibold">Crafting your delicious recipe...</p>
+                </div>
+                
+                <div id="error-box" class="hidden my-8 w-full max-w-2xl bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg fade-in" role="alert">
+                    <p class="font-bold">Oops! An error occurred.</p>
+                    <p id="error-message">Something went wrong. Please try again.</p>
+                </div>
+
+                <div id="recipe-container" class="hidden my-8 w-full max-w-2xl bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-2xl fade-in">
+                    <div id="recipe-output" class="prose dark:prose-invert max-w-none">
+                        </div>
+                     <button id="copy-btn" class="mt-6 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                        <i class="fas fa-copy mr-2"></i>
+                        <span id="copy-btn-text">Copy Recipe</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('recipe-form');
+        const generateBtn = document.getElementById('generate-btn');
+        const loader = document.getElementById('loader');
+        const recipeContainer = document.getElementById('recipe-container');
+        const recipeOutput = document.getElementById('recipe-output');
+        const errorBox = document.getElementById('error-box');
+        const errorMessage = document.getElementById('error-message');
+        const copyBtn = document.getElementById('copy-btn');
+        const copyBtnText = document.getElementById('copy-btn-text');
+        const themeToggle = document.getElementById('theme-toggle');
+
+        // --- Dark/Light Mode Logic ---
+        // Check for saved theme in localStorage and apply it
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Theme toggle button event listener
+        themeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            // Save preference to localStorage
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+        });
+
+        // --- Form Submission Logic ---
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const data = {
+                ingredients: formData.get('ingredients'),
+                dietary_restrictions: formData.get('dietary-restrictions'),
+                cuisine_type: formData.get('cuisine-type') || 'any'
+            };
+
+            // --- UI Updates: Show loader, hide previous results ---
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+            loader.classList.remove('hidden');
+            recipeContainer.classList.add('hidden');
+            errorBox.classList.add('hidden');
+
+            try {
+                // --- API Call to Backend ---
+                // IMPORTANT: Replace with your actual backend URL when deployed.
+                const response = await fetch('http://127.0.0.1:8000/generate-recipe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                // --- Display the Recipe using Marked.js ---
+                // This is much more reliable than custom regex for converting markdown to HTML
+                recipeOutput.innerHTML = marked.parse(result.recipe);
+                recipeContainer.classList.remove('hidden');
+
+            } catch (error) {
+                // --- Error Handling ---
+                console.error('Error:', error);
+                errorMessage.textContent = error.message;
+                errorBox.classList.remove('hidden');
+            } finally {
+                // --- UI Cleanup: Hide loader, re-enable button ---
+                loader.classList.add('hidden');
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-magic mr-2"></i>Generate Recipe';
+            }
+        });
+        
+        // --- Copy to Clipboard Logic ---
+        copyBtn.addEventListener('click', () => {
+            const recipeText = recipeOutput.innerText;
+
+            // Use the modern, asynchronous Clipboard API
+            navigator.clipboard.writeText(recipeText).then(() => {
+                // Success feedback
+                copyBtnText.innerText = 'Copied!';
+                copyBtn.querySelector('i').classList.replace('fa-copy', 'fa-check');
+                
+                setTimeout(() => {
+                    copyBtnText.innerText = 'Copy Recipe';
+                    copyBtn.querySelector('i').classList.replace('fa-check', 'fa-copy');
+                }, 2000);
+            }).catch(err => {
+                // Error feedback
+                console.error('Failed to copy text: ', err);
+                copyBtnText.innerText = 'Copy Failed';
+            });
+        });
+
+        // --- Change background image on each visit for a fresh look ---
+        // This is a simple way to make the page feel dynamic
+        document.getElementById('bg-container').style.backgroundImage = `url('https://source.unsplash.com/1920x1080/?food,cooking&t=${new Date().getTime()}')`;
+
+    </script>
+</body>
+</html>
